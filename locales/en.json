@@ -1,0 +1,69 @@
+{
+  "welcome": {
+    "message": "Welcome to DN-Ecommerce",
+    "greeting": "Hello, {{name}}"
+  },
+  "auth": {
+    "loginSuccess": "Login successful",
+    "logoutSuccess": "Logout successful",
+    "registerSuccess": "User registered successfully",
+    "invalidCredentials": "Invalid credentials",
+    "tokenRefreshed": "Token refreshed successfully",
+    "passwordResetSent": "Password reset email sent",
+    "passwordResetSuccess": "Password reset successful"
+  },
+  "user": {
+    "profileUpdated": "Profile updated successfully",
+    "passwordChanged": "Password changed successfully",
+    "userNotFound": "User not found",
+    "userDeleted": "User deleted successfully"
+  },
+  "product": {
+    "created": "Product created successfully",
+    "updated": "Product updated successfully",
+    "deleted": "Product deleted successfully",
+    "notFound": "Product not found",
+    "reviewAdded": "Review added successfully",
+    "insufficientStock": "Insufficient stock available"
+  },
+  "order": {
+    "created": "Order created successfully",
+    "cancelled": "Order cancelled successfully",
+    "statusUpdated": "Order status updated successfully",
+    "notFound": "Order not found",
+    "cannotCancel": "Order cannot be cancelled in current status"
+  },
+  "payment": {
+    "created": "Payment created successfully",
+    "notFound": "Payment not found",
+    "failed": "Payment failed",
+    "success": "Payment successful"
+  },
+  "wallet": {
+    "insufficientBalance": "Insufficient wallet balance",
+    "credited": "Wallet credited successfully",
+    "debited": "Amount debited from wallet",
+    "transferSuccess": "Transfer successful"
+  },
+  "coupon": {
+    "created": "Coupon created successfully",
+    "updated": "Coupon updated successfully",
+    "deleted": "Coupon deleted successfully",
+    "invalid": "Invalid coupon code",
+    "expired": "Coupon has expired",
+    "limitReached": "Coupon usage limit reached",
+    "applied": "Coupon applied successfully"
+  },
+  "errors": {
+    "serverError": "Internal server error",
+    "validationError": "Validation error",
+    "unauthorized": "Unauthorized access",
+    "forbidden": "Access forbidden",
+    "notFound": "Resource not found",
+    "badRequest": "Bad request"
+  },
+  "success": {
+    "operationSuccess": "Operation completed successfully",
+    "dataRetrieved": "Data retrieved successfully"
+  }
+}

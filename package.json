@@ -1,6 +1,6 @@
 {
   "name": "digital-ecommerce-be",
-  "version": "0.0.1",
+  "version": "0.2.1",
   "description": "Digital Ecommerce Backend",
   "main": "server.js",
   "scripts": {
@@ -21,6 +21,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "axios": "^1.13.4",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "crypto": "^1.0.1",

@@ -27,8 +27,8 @@ const walletSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Indexes
-walletSchema.index({ user: 1 });
+// Indexes (user field already has unique: true which creates an index automatically)
+// walletSchema.index({ user: 1 }); // REMOVED: duplicate with unique: true
 
 // Method to check if wallet has sufficient balance
 walletSchema.methods.hasSufficientBalance = function(amount) {

@@ -4,10 +4,12 @@ const router = express.Router();
 // import all routes modules
 const authRoutes = require("./user/authRoutes");
 const userRoutes = require("./user/userRoutes");
+const walletRoutes = require("./user/walletRoutes");
 
 // Mount routes
 router.use("/auth", authRoutes);
 router.use("/users", userRoutes);
+router.use("/wallet", walletRoutes);
 
 // API info route
 router.get("/", (req, res) => {
@@ -18,6 +20,7 @@ router.get("/", (req, res) => {
     endpoints: {
       auth: "/api/auth",
       users: "/api/users",
+      wallet: "/api/wallet",
     },
   });
 });

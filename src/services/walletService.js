@@ -1,10 +1,26 @@
-const mongoose = require('mongoose');
-const Wallet = require('../models/Wallet');
-const WalletTransaction = require('../models/WalletTransaction');
+const mongoose = require("mongoose");
+const Wallet = require("../models/Wallet");
+const WalletTransaction = require("../models/WalletTransaction");
+const config = require("../config/env");
 
 /**
  * Wallet Service - Handles all wallet operations
+ * Supports both transactional (production with replica set) and non-transactional (development) modes
  */
+
+/**
+ * Check if MongoDB transactions are available
+ * Transactions require replica set or sharded cluster
+ */
+const isTransactionSupported = () => {
+  // In production, always try to use transactions
+  if (config.NODE_ENV === "production") {
+    return true;
+  }
+
+  // In development, disable transactions (standalone MongoDB)
+  return false;
+};
 
 /**
  * Create wallet for a new user
@@ -13,7 +29,7 @@ const createWallet = async (userId, session = null) => {
   try {
     const wallet = new Wallet({
       user: userId,
-      balance: 0
+      balance: 0,
     });
 
     if (session) {
@@ -47,9 +63,14 @@ const getWallet = async (userId) => {
 };
 
 /**
- * Credit wallet (add money)
+ * Credit wallet (add money) - WITH transaction support
  */
-const creditWallet = async (userId, amount, description, reference = null) => {
+const creditWalletWithTransaction = async (
+  userId,
+  amount,
+  description,
+  reference = null,
+) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -60,17 +81,23 @@ const creditWallet = async (userId, amount, description, reference = null) => {
       wallet = await createWallet(userId, session);
     }
 
+    // Store balance before credit
+    const balanceBefore = wallet.balance;
+
     // Credit the wallet
-    await wallet.credit(amount, session);
+    wallet.balance += amount;
+    wallet.lastTransactionAt = new Date();
+    await wallet.save({ session });
 
     // Create transaction record
     const transaction = new WalletTransaction({
       wallet: wallet._id,
-      type: 'credit',
+      type: "credit",
       amount,
+      balanceBefore,
       balanceAfter: wallet.balance,
       description,
-      reference
+      reference,
     });
     await transaction.save({ session });
 
@@ -86,9 +113,72 @@ const creditWallet = async (userId, amount, description, reference = null) => {
 };
 
 /**
- * Debit wallet (subtract money)
+ * Credit wallet (add money) - WITHOUT transaction support (for development)
  */
-const debitWallet = async (userId, amount, description, reference = null) => {
+const creditWalletWithoutTransaction = async (
+  userId,
+  amount,
+  description,
+  reference = null,
+) => {
+  try {
+    // Get or create wallet
+    let wallet = await Wallet.findOne({ user: userId });
+    if (!wallet) {
+      wallet = await createWallet(userId);
+    }
+
+    // Store balance before credit
+    const balanceBefore = wallet.balance;
+
+    // Credit the wallet
+    wallet.balance += amount;
+    wallet.lastTransactionAt = new Date();
+    await wallet.save();
+
+    // Create transaction record
+    const transaction = new WalletTransaction({
+      wallet: wallet._id,
+      type: "credit",
+      amount,
+      balanceBefore,
+      balanceAfter: wallet.balance,
+      description,
+      reference,
+    });
+    await transaction.save();
+
+    return { wallet, transaction };
+  } catch (error) {
+    throw new Error(`Failed to credit wallet: ${error.message}`);
+  }
+};
+
+/**
+ * Credit wallet (add money)
+ */
+const creditWallet = async (userId, amount, description, reference = null) => {
+  if (isTransactionSupported()) {
+    return creditWalletWithTransaction(userId, amount, description, reference);
+  } else {
+    return creditWalletWithoutTransaction(
+      userId,
+      amount,
+      description,
+      reference,
+    );
+  }
+};
+
+/**
+ * Debit wallet (subtract money) - WITH transaction support
+ */
+const debitWalletWithTransaction = async (
+  userId,
+  amount,
+  description,
+  reference = null,
+) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -96,25 +186,31 @@ const debitWallet = async (userId, amount, description, reference = null) => {
     // Get wallet
     const wallet = await Wallet.findOne({ user: userId }).session(session);
     if (!wallet) {
-      throw new Error('Wallet not found');
+      throw new Error("Wallet not found");
     }
 
     // Check sufficient balance
     if (!wallet.hasSufficientBalance(amount)) {
-      throw new Error('Insufficient wallet balance');
+      throw new Error("Insufficient wallet balance");
     }
 
+    // Store balance before debit
+    const balanceBefore = wallet.balance;
+
     // Debit the wallet
-    await wallet.debit(amount, session);
+    wallet.balance -= amount;
+    wallet.lastTransactionAt = new Date();
+    await wallet.save({ session });
 
     // Create transaction record
     const transaction = new WalletTransaction({
       wallet: wallet._id,
-      type: 'debit',
+      type: "debit",
       amount,
+      balanceBefore,
       balanceAfter: wallet.balance,
       description,
-      reference
+      reference,
     });
     await transaction.save({ session });
 
@@ -126,6 +222,69 @@ const debitWallet = async (userId, amount, description, reference = null) => {
     await session.abortTransaction();
     session.endSession();
     throw error;
+  }
+};
+
+/**
+ * Debit wallet (subtract money) - WITHOUT transaction support (for development)
+ */
+const debitWalletWithoutTransaction = async (
+  userId,
+  amount,
+  description,
+  reference = null,
+) => {
+  try {
+    // Get wallet
+    const wallet = await Wallet.findOne({ user: userId });
+    if (!wallet) {
+      throw new Error("Wallet not found");
+    }
+
+    // Check sufficient balance
+    if (!wallet.hasSufficientBalance(amount)) {
+      throw new Error("Insufficient wallet balance");
+    }
+
+    // Store balance before debit
+    const balanceBefore = wallet.balance;
+
+    // Debit the wallet
+    wallet.balance -= amount;
+    wallet.lastTransactionAt = new Date();
+    await wallet.save();
+
+    // Create transaction record
+    const transaction = new WalletTransaction({
+      wallet: wallet._id,
+      type: "debit",
+      amount,
+      balanceBefore,
+      balanceAfter: wallet.balance,
+      description,
+      reference,
+    });
+    await transaction.save();
+
+    return { wallet, transaction };
+  } catch (error) {
+    throw error;
+  }
+};
+
+/**
+ * Debit wallet (subtract money)
+ */
+const debitWallet = async (userId, amount, description, reference = null) => {
+  if (isTransactionSupported()) {
+    return debitWalletWithTransaction(userId, amount, description, reference);
+  } else {
+    return debitWalletWithoutTransaction(
+      userId,
+      amount,
+      description,
+      reference,
+    );
   }
 };
 
@@ -145,9 +304,11 @@ const getTransactionHistory = async (userId, page = 1, limit = 20) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
-      .populate('reference.id');
+      .populate("reference.id");
 
-    const total = await WalletTransaction.countDocuments({ wallet: wallet._id });
+    const total = await WalletTransaction.countDocuments({
+      wallet: wallet._id,
+    });
 
     return { transactions, total };
   } catch (error) {
@@ -160,15 +321,10 @@ const getTransactionHistory = async (userId, page = 1, limit = 20) => {
  */
 const processOrderPayment = async (userId, orderId, amount) => {
   try {
-    const result = await debitWallet(
-      userId,
-      amount,
-      'Order payment',
-      {
-        model: 'Order',
-        id: orderId
-      }
-    );
+    const result = await debitWallet(userId, amount, "Order payment", {
+      model: "Order",
+      id: orderId,
+    });
 
     return result;
   } catch (error) {
@@ -181,15 +337,10 @@ const processOrderPayment = async (userId, orderId, amount) => {
  */
 const refundOrderToWallet = async (userId, orderId, amount) => {
   try {
-    const result = await creditWallet(
-      userId,
-      amount,
-      'Order refund',
-      {
-        model: 'Order',
-        id: orderId
-      }
-    );
+    const result = await creditWallet(userId, amount, "Order refund", {
+      model: "Order",
+      id: orderId,
+    });
 
     return result;
   } catch (error) {
@@ -221,5 +372,5 @@ module.exports = {
   getTransactionHistory,
   processOrderPayment,
   refundOrderToWallet,
-  hasSufficientBalance
+  hasSufficientBalance,
 };

@@ -88,13 +88,13 @@ exports.login = asyncHandler(async (req, res) => {
   const user = await User.findOne({ email }).select("+password");
 
   if (!user) {
-    return res.status(401).json(ApiResponse.error("Invalid credentials", 401));
+    return res.status(401).json(ApiResponse.error("Invalid user", 401));
   }
 
   // Check password
   const isPasswordValid = await user.comparePassword(password);
   if (!isPasswordValid) {
-    return res.status(401).json(ApiResponse.error("Invalid credentials", 401));
+    return res.status(401).json(ApiResponse.error("Invalid password", 401));
   }
 
   // Optional: Check if email is verified

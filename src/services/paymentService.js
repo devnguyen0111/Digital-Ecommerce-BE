@@ -1,5 +1,6 @@
 const crypto = require("crypto");
 const config = require("../config/env");
+const logger = require("../utils/logger");
 
 /**
  * PayOS Payment Service
@@ -37,14 +38,14 @@ class PayOSService {
   verifyWebhookSignature(webhookData) {
     // Skip verification in development if configured
     if (process.env.PAYOS_SKIP_SIGNATURE === 'true') {
-      console.log('⚠️ SKIPPING signature verification (development mode)');
+      logger.warn('SKIPPING signature verification (development mode)');
       return true;
     }
 
     const { data, signature } = webhookData;
 
     if (!signature) {
-      console.error('❌ No signature provided in webhook');
+      logger.error('No signature provided in webhook');
       return false;
     }
 
@@ -70,15 +71,16 @@ class PayOSService {
         .update(signatureStr)
         .digest("hex");
 
-      console.log('🔐 Signature Verification:');
-      console.log('  Data String:', signatureStr.substring(0, 100) + '...');
-      console.log('  Received:', signature);
-      console.log('  Expected:', expectedSignature);
-      console.log('  Match:', signature === expectedSignature);
+      logger.debug('Signature Verification', {
+        dataString: signatureStr.substring(0, 100) + '...',
+        signatureReceived: signature,
+        signatureExpected: expectedSignature,
+        match: signature === expectedSignature
+      });
 
       return signature === expectedSignature;
     } catch (error) {
-      console.error('❌ Error verifying signature:', error);
+      logger.error('Error verifying signature', error);
       return false;
     }
   }
@@ -208,19 +210,19 @@ class PayOSService {
    * @returns {Object} Processed webhook data
    */
   processWebhook(webhookData) {
-    console.log('📨 PayOS Webhook Received:');
-    console.log('  Root Code:', webhookData.code);
-    console.log('  Root Desc:', webhookData.desc);
-    console.log('  Success Flag:', webhookData.success);
-    console.log('  Order Code:', webhookData.data?.orderCode);
-    console.log('  Amount:', webhookData.data?.amount);
-    console.log('  Full Data:', JSON.stringify(webhookData.data, null, 2));
+    logger.webhook('Received', {
+      rootCode: webhookData.code,
+      rootDesc: webhookData.desc,
+      success: webhookData.success,
+      orderCode: webhookData.data?.orderCode,
+      amount: webhookData.data?.amount
+    });
 
     // Verify signature
     const isValid = this.verifyWebhookSignature(webhookData);
 
     if (!isValid) {
-      console.error('❌ Invalid webhook signature!');
+      logger.error('Invalid webhook signature!');
       throw new Error("Invalid webhook signature");
     }
 
@@ -246,7 +248,7 @@ class PayOSService {
       status = data.status;
     }
 
-    console.log('  ✅ Determined Status:', status);
+    logger.payment('Status Determined', { status, orderCode: data.orderCode });
 
     return {
       orderCode: data.orderCode,

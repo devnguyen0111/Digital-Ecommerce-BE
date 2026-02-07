@@ -1,0 +1,130 @@
+version: '3.8'
+
+services:
+  # Application service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: digital-ecommerce-api
+    restart: unless-stopped
+    ports:
+      - '${PORT:-5000}:5000'
+    environment:
+      - NODE_ENV=production
+      - MONGO_URI=mongodb://mongo:27017/digital-ecommerce
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    env_file:
+      - .env
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - app-network
+    volumes:
+      - ./logs:/usr/src/app/logs
+      - ./uploads:/usr/src/app/uploads
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "require('http').get('http://localhost:5000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # MongoDB service
+  mongo:
+    image: mongo:6.0
+    container_name: digital-ecommerce-mongo
+    restart: unless-stopped
+    ports:
+      - '27017:27017'
+    environment:
+      - MONGO_INITDB_DATABASE=digital-ecommerce
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USERNAME:-admin}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD:-secure_password}
+    volumes:
+      - mongo-data:/data/db
+      - mongo-config:/data/configdb
+    networks:
+      - app-network
+    healthcheck:
+      test: ['CMD', 'mongosh', '--eval', "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  # Redis service
+  redis:
+    image: redis:7-alpine
+    container_name: digital-ecommerce-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_password}
+    volumes:
+      - redis-data:/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # MongoDB Express (optional - for database GUI)
+  mongo-express:
+    image: mongo-express:latest
+    container_name: digital-ecommerce-mongo-express
+    restart: unless-stopped
+    ports:
+      - '8081:8081'
+    environment:
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=${MONGO_ROOT_USERNAME:-admin}
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=${MONGO_ROOT_PASSWORD:-secure_password}
+      - ME_CONFIG_MONGODB_URL=mongodb://${MONGO_ROOT_USERNAME:-admin}:${MONGO_ROOT_PASSWORD:-secure_password}@mongo:27017/
+      - ME_CONFIG_BASICAUTH_USERNAME=${MONGOEXPRESS_LOGIN:-admin}
+      - ME_CONFIG_BASICAUTH_PASSWORD=${MONGOEXPRESS_PASSWORD:-pass}
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  # Redis Commander (optional - for Redis GUI)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: digital-ecommerce-redis-commander
+    restart: unless-stopped
+    ports:
+      - '8082:8081'
+    environment:
+      - REDIS_HOSTS=local:redis:6379:0:${REDIS_PASSWORD:-redis_password}
+    depends_on:
+      - redis
+    networks:
+      - app-network
+
+# Named volumes for data persistence
+volumes:
+  mongo-data:
+    name: digital-ecommerce-mongo-data
+  mongo-config:
+    name: digital-ecommerce-mongo-config
+  redis-data:
+    name: digital-ecommerce-redis-data
+
+# Network for service communication
+networks:
+  app-network:
+    name: digital-ecommerce-network
+    driver: bridge

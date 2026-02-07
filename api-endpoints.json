@@ -1,0 +1,714 @@
+{
+  "info": {
+    "name": "DN-Ecommerce API",
+    "version": "0.0.1",
+    "description": "Digital Ecommerce Backend API Documentation",
+    "baseUrl": "http://localhost:5000",
+    "supportedLanguages": ["en", "vi"]
+  },
+  "authentication": {
+    "type": "Bearer Token",
+    "header": "Authorization: Bearer {token}",
+    "tokenExpiry": {
+      "accessToken": "7 days",
+      "refreshToken": "30 days"
+    }
+  },
+  "endpoints": {
+    "auth": {
+      "baseUrl": "/api/auth",
+      "endpoints": [
+        {
+          "name": "Register User",
+          "method": "POST",
+          "path": "/api/auth/register",
+          "authentication": false,
+          "body": {
+            "username": "string",
+            "email": "string",
+            "password": "string",
+            "preferredLanguage": "string (optional, en|vi)"
+          },
+          "response": {
+            "201": {
+              "success": true,
+              "message": "User registered successfully",
+              "data": {
+                "user": {
+                  "id": "string",
+                  "username": "string",
+                  "email": "string",
+                  "isVerified": false
+                },
+                "token": "string",
+                "refreshToken": "string"
+              }
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "method": "POST",
+          "path": "/api/auth/login",
+          "authentication": false,
+          "body": {
+            "email": "string",
+            "password": "string"
+          },
+          "response": {
+            "200": {
+              "success": true,
+              "message": "Login successful",
+              "data": {
+                "user": {
+                  "id": "string",
+                  "username": "string",
+                  "email": "string",
+                  "role": "string"
+                },
+                "token": "string",
+                "refreshToken": "string"
+              }
+            }
+          }
+        },
+        {
+          "name": "Get Current User",
+          "method": "GET",
+          "path": "/api/auth/me",
+          "authentication": true,
+          "response": {
+            "200": {
+              "success": true,
+              "message": "User retrieved successfully",
+              "data": {
+                "user": {
+                  "id": "string",
+                  "username": "string",
+                  "email": "string",
+                  "role": "string",
+                  "isVerified": "boolean",
+                  "wallet": {
+                    "balance": "number",
+                    "currency": "VND"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "method": "POST",
+          "path": "/api/auth/logout",
+          "authentication": true,
+          "response": {
+            "200": {
+              "success": true,
+              "message": "Logout successful"
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "method": "POST",
+          "path": "/api/auth/refresh-token",
+          "authentication": false,
+          "body": {
+            "refreshToken": "string"
+          },
+          "response": {
+            "200": {
+              "success": true,
+              "message": "Token refreshed successfully",
+              "data": {
+                "token": "string"
+              }
+            }
+          }
+        },
+        {
+          "name": "Verify Email",
+          "method": "GET",
+          "path": "/api/auth/verify-email/:token",
+          "authentication": false,
+          "params": {
+            "token": "string"
+          },
+          "response": {
+            "200": {
+              "success": true,
+              "message": "Email verified successfully",
+              "data": {
+                "isVerified": true
+              }
+            }
+          }
+        },
+        {
+          "name": "Resend Verification Email",
+          "method": "POST",
+          "path": "/api/auth/resend-verification",
+          "authentication": false,
+          "body": {
+            "email": "string"
+          },
+          "response": {
+            "200": {
+              "success": true,
+              "message": "Verification email sent successfully"
+            }
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "method": "POST",
+          "path": "/api/auth/forgot-password",
+          "authentication": false,
+          "body": {
+            "email": "string"
+          },
+          "response": {
+            "200": {
+              "success": true,
+              "message": "Password reset email sent"
+            }
+          }
+        },
+        {
+          "name": "Reset Password",
+          "method": "POST",
+          "path": "/api/auth/reset-password/:resetToken",
+          "authentication": false,
+          "params": {
+            "resetToken": "string"
+          },
+          "body": {
+            "password": "string"
+          },
+          "response": {
+            "200": {
+              "success": true,
+              "message": "Password reset successful",
+              "data": {
+                "token": "string",
+                "refreshToken": "string"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "users": {
+      "baseUrl": "/api/users",
+      "endpoints": [
+        {
+          "name": "Get User Profile",
+          "method": "GET",
+          "path": "/api/users/profile",
+          "authentication": true,
+          "response": {
+            "200": {
+              "success": true,
+              "message": "Profile retrieved successfully",
+              "data": {
+                "user": {
+                  "id": "string",
+                  "username": "string",
+                  "email": "string",
+                  "role": "string",
+                  "isVerified": "boolean",
+                  "crnPoint": "number",
+                  "wallet": {
+                    "balance": "number",
+                    "currency": "VND"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Update User Profile",
+          "method": "PUT",
+          "path": "/api/users/profile",
+          "authentication": true,
+          "body": {
+            "username": "string"
+          },
+          "response": {
+            "200": {
+              "success": true,
+              "message": "Profile updated successfully",
+              "data": {
+                "user": {
+                  "id": "string",
+                  "username": "string",
+                  "role": "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Change Password",
+          "method": "PUT",
+          "path": "/api/users/change-password",
+          "authentication": true,
+          "body": {
+            "currentPassword": "string",
+            "newPassword": "string"
+          },
+          "response": {
+            "200": {
+              "success": true,
+              "message": "Password changed successfully"
+            }
+          }
+        },
+        {
+          "name": "Get All Users",
+          "method": "GET",
+          "path": "/api/users",
+          "authentication": true,
+          "requiredRole": ["admin", "manager"],
+          "queryParams": {
+            "page": "number (default: 1)",
+            "limit": "number (default: 10)",
+            "sort": "string (e.g., -createdAt)",
+            "search": "string"
+          },
+          "response": {
+            "200": {
+              "success": true,
+              "message": "Users retrieved successfully",
+              "data": [
+                {
+                  "id": "string",
+                  "username": "string",
+                  "email": "string",
+                  "role": "string",
+                  "isVerified": "boolean",
+                  "createdAt": "date"
+                }
+              ],
+              "pagination": {
+                "currentPage": "number",
+                "totalPages": "number",
+                "pageSize": "number",
+                "totalItems": "number",
+                "hasNextPage": "boolean",
+                "hasPrevPage": "boolean"
+              }
+            }
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "method": "GET",
+          "path": "/api/users/:id",
+          "authentication": true,
+          "requiredRole": ["admin", "manager"],
+          "params": {
+            "id": "string"
+          },
+          "response": {
+            "200": {
+              "success": true,
+              "message": "User retrieved successfully",
+              "data": {
+                "user": {
+                  "id": "string",
+                  "username": "string",
+                  "email": "string",
+                  "role": "string",
+                  "wallet": "object"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete User",
+          "method": "DELETE",
+          "path": "/api/users/:id",
+          "authentication": true,
+          "requiredRole": ["admin"],
+          "params": {
+            "id": "string"
+          },
+          "response": {
+            "200": {
+              "success": true,
+              "message": "User deleted successfully"
+            }
+          }
+        },
+        {
+          "name": "Add Points to User",
+          "method": "POST",
+          "path": "/api/users/:id/add-points",
+          "authentication": true,
+          "requiredRole": ["staff", "manager", "admin"],
+          "params": {
+            "id": "string"
+          },
+          "body": {
+            "userId": "string",
+            "points": "number"
+          },
+          "response": {
+            "200": {
+              "success": true,
+              "message": "Points added successfully",
+              "data": {
+                "user": {
+                  "id": "string",
+                  "crnPoint": "number"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "wallet": {
+      "baseUrl": "/api/wallet",
+      "endpoints": [
+        {
+          "name": "Get Wallet Details",
+          "method": "GET",
+          "path": "/api/wallet",
+          "authentication": true,
+          "response": {
+            "200": {
+              "success": true,
+              "message": "Wallet retrieved successfully",
+              "data": {
+                "wallet": {
+                  "_id": "string",
+                  "user": "string",
+                  "balance": "number",
+                  "currency": "VND",
+                  "isActive": "boolean",
+                  "lastTransactionAt": "date"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get Wallet Balance",
+          "method": "GET",
+          "path": "/api/wallet/balance",
+          "authentication": true,
+          "response": {
+            "200": {
+              "success": true,
+              "message": "Balance retrieved successfully",
+              "data": {
+                "balance": "number",
+                "currency": "VND"
+              }
+            }
+          }
+        },
+        {
+          "name": "Get Transaction History",
+          "method": "GET",
+          "path": "/api/wallet/transactions",
+          "authentication": true,
+          "queryParams": {
+            "page": "number (default: 1)",
+            "limit": "number (default: 20)"
+          },
+          "response": {
+            "200": {
+              "success": true,
+              "message": "Transactions retrieved successfully",
+              "data": [
+                {
+                  "_id": "string",
+                  "type": "credit|debit",
+                  "amount": "number",
+                  "balanceAfter": "number",
+                  "description": "string",
+                  "createdAt": "date"
+                }
+              ],
+              "pagination": "object"
+            }
+          }
+        },
+        {
+          "name": "Add Funds (Create PayOS Payment Link)",
+          "method": "POST",
+          "path": "/api/wallet/add-funds",
+          "authentication": true,
+          "body": {
+            "amount": "number (minimum: 1000)"
+          },
+          "response": {
+            "201": {
+              "success": true,
+              "message": "Payment link created successfully",
+              "data": {
+                "payment": {
+                  "id": "string",
+                  "amount": "number",
+                  "checkoutUrl": "string",
+                  "qrCode": "string",
+                  "orderCode": "number",
+                  "expiredAt": "date"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "PayOS Webhook Handler",
+          "method": "POST",
+          "path": "/api/wallet/payos-webhook",
+          "authentication": false,
+          "note": "Called by PayOS automatically after payment",
+          "body": {
+            "data": {
+              "orderCode": "number",
+              "amount": "number",
+              "status": "PAID|CANCELLED|EXPIRED",
+              "code": "string",
+              "desc": "string",
+              "transactions": "array"
+            },
+            "signature": "string"
+          },
+          "response": {
+            "200": {
+              "code": "00",
+              "desc": "success",
+              "success": true
+            }
+          }
+        },
+        {
+          "name": "Check Payment Status",
+          "method": "GET",
+          "path": "/api/wallet/payment-status/:orderCode",
+          "authentication": true,
+          "params": {
+            "orderCode": "number"
+          },
+          "response": {
+            "200": {
+              "success": true,
+              "message": "Payment status retrieved",
+              "data": {
+                "payment": {
+                  "id": "string",
+                  "status": "pending|processing|success|failed|cancelled",
+                  "amount": "number",
+                  "payosStatus": "PAID|CANCELLED|EXPIRED",
+                  "createdAt": "date",
+                  "paidAt": "date"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Cancel Payment",
+          "method": "POST",
+          "path": "/api/wallet/cancel-payment/:orderCode",
+          "authentication": true,
+          "params": {
+            "orderCode": "number"
+          },
+          "response": {
+            "200": {
+              "success": true,
+              "message": "Payment cancelled successfully"
+            }
+          }
+        },
+        {
+          "name": "Manual Credit Wallet",
+          "method": "POST",
+          "path": "/api/wallet/credit",
+          "authentication": true,
+          "requiredRole": ["admin", "manager"],
+          "body": {
+            "userId": "string",
+            "amount": "number",
+            "description": "string"
+          },
+          "response": {
+            "200": {
+              "success": true,
+              "message": "Wallet credited successfully",
+              "data": {
+                "wallet": "object",
+                "transaction": "object"
+              }
+            }
+          }
+        },
+        {
+          "name": "Transfer Funds Between Wallets",
+          "method": "POST",
+          "path": "/api/wallet/transfer",
+          "authentication": true,
+          "body": {
+            "recipientEmail": "string",
+            "amount": "number (minimum: 1000)",
+            "note": "string (optional)"
+          },
+          "response": {
+            "200": {
+              "success": true,
+              "message": "Transfer completed successfully",
+              "data": {
+                "senderBalance": "number",
+                "recipientBalance": "number",
+                "amount": "number",
+                "timestamp": "date"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "system": {
+      "baseUrl": "/",
+      "endpoints": [
+        {
+          "name": "Health Check",
+          "method": "GET",
+          "path": "/health",
+          "authentication": false,
+          "response": {
+            "200": {
+              "success": true,
+              "message": "Server is healthy and running",
+              "timestamp": "ISO date string",
+              "uptime": "string"
+            }
+          }
+        },
+        {
+          "name": "API Info",
+          "method": "GET",
+          "path": "/api",
+          "authentication": false,
+          "response": {
+            "200": {
+              "success": true,
+              "message": "DN-Ecommerce API",
+              "version": "0.0.1",
+              "endpoints": {
+                "auth": "/api/auth",
+                "users": "/api/users",
+                "wallet": "/api/wallet"
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "errorCodes": {
+    "200": "OK - Request successful",
+    "201": "Created - Resource created successfully",
+    "400": "Bad Request - Invalid input or validation error",
+    "401": "Unauthorized - Invalid or missing authentication token",
+    "403": "Forbidden - Insufficient permissions",
+    "404": "Not Found - Resource not found",
+    "500": "Internal Server Error - Server encountered an error"
+  },
+  "responseFormat": {
+    "success": {
+      "success": true,
+      "message": "string",
+      "data": "object|array"
+    },
+    "error": {
+      "success": false,
+      "message": "string",
+      "errors": "array (optional)"
+    },
+    "paginated": {
+      "success": true,
+      "message": "string",
+      "data": "array",
+      "pagination": {
+        "currentPage": "number",
+        "totalPages": "number",
+        "pageSize": "number",
+        "totalItems": "number",
+        "hasNextPage": "boolean",
+        "hasPrevPage": "boolean"
+      }
+    }
+  },
+  "examples": {
+    "loginAndGetProfile": {
+      "step1": {
+        "description": "Login to get token",
+        "request": {
+          "method": "POST",
+          "url": "http://localhost:5000/api/auth/login",
+          "body": {
+            "email": "user@example.com",
+            "password": "password123"
+          }
+        },
+        "response": {
+          "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+          "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        }
+      },
+      "step2": {
+        "description": "Get profile with token",
+        "request": {
+          "method": "GET",
+          "url": "http://localhost:5000/api/users/profile",
+          "headers": {
+            "Authorization": "Bearer {token}"
+          }
+        }
+      }
+    },
+    "walletTopUp": {
+      "step1": {
+        "description": "Create payment link",
+        "request": {
+          "method": "POST",
+          "url": "http://localhost:5000/api/wallet/add-funds",
+          "headers": {
+            "Authorization": "Bearer {token}"
+          },
+          "body": {
+            "amount": 100000
+          }
+        },
+        "response": {
+          "checkoutUrl": "https://pay.payos.vn/...",
+          "orderCode": 1769920907023627
+        }
+      },
+      "step2": {
+        "description": "User completes payment on PayOS",
+        "note": "PayOS automatically calls webhook"
+      },
+      "step3": {
+        "description": "Check balance",
+        "request": {
+          "method": "GET",
+          "url": "http://localhost:5000/api/wallet/balance",
+          "headers": {
+            "Authorization": "Bearer {token}"
+          }
+        }
+      }
+    }
+  }
+}

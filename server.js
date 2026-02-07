@@ -1,4 +1,8 @@
 require("dotenv").config();
+
+// Validate environment variables before starting
+require("./src/config/validateEnv")();
+
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
@@ -60,16 +64,54 @@ if (process.env.NODE_ENV === "development") {
 const languageMiddleware = require("./src/middleware/language");
 app.use(languageMiddleware);
 
-// Health Check route
+// Health Check route with comprehensive monitoring
 const startTime = Date.now();
-app.get("/health", (req, res) => {
-  const uptime = Math.floor((Date.now() - startTime) / 1000);
-  res.status(200).json({
-    success: true,
-    message: "Server is healthy and running",
+const packageJson = require("./package.json");
+const mongoose = require("mongoose");
+
+app.get("/health", async (req, res) => {
+  const health = {
+    status: 'healthy',
     timestamp: new Date().toISOString(),
-    uptime: `${uptime}s`,
-  });
+    uptime: Math.floor((Date.now() - startTime) / 1000),
+    version: packageJson.version,
+    checks: {}
+  };
+
+  // Database connectivity check
+  try {
+    await mongoose.connection.db.admin().ping();
+    health.checks.database = {
+      status: 'healthy',
+      name: mongoose.connection.db.databaseName,
+      readyState: mongoose.connection.readyState
+    };
+  } catch (error) {
+    health.checks.database = {
+      status: 'unhealthy',
+      error: error.message
+    };
+    health.status = 'degraded';
+  }
+
+  // Memory usage check
+  const memory = process.memoryUsage();
+  health.checks.memory = {
+    status: 'healthy',
+    rss: `${Math.round(memory.rss / 1024 / 1024)} MB`,
+    heapUsed: `${Math.round(memory.heapUsed / 1024 / 1024)} MB`,
+    heapTotal: `${Math.round(memory.heapTotal / 1024 / 1024)} MB`
+  };
+
+  // Environment check
+  health.checks.environment = {
+    status: 'healthy',
+    nodeEnv: process.env.NODE_ENV || 'development',
+    nodeVersion: process.version
+  };
+
+  const statusCode = health.status === 'healthy' ? 200 : 503;
+  res.status(statusCode).json(health);
 });
 
 // API Routes

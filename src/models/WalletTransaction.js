@@ -48,24 +48,23 @@ walletTransactionSchema.index({ type: 1 });
 walletTransactionSchema.index({ 'reference.model': 1, 'reference.id': 1 });
 
 // Make transactions immutable after creation
-walletTransactionSchema.pre('save', function(next) {
+walletTransactionSchema.pre('save', function() {
   if (!this.isNew) {
-    return next(new Error('Wallet transactions cannot be modified after creation'));
+    throw new Error('Wallet transactions cannot be modified after creation');
   }
-  next();
 });
 
 // Prevent deletion
-walletTransactionSchema.pre('remove', function(next) {
-  next(new Error('Wallet transactions cannot be deleted'));
+walletTransactionSchema.pre('remove', function() {
+  throw new Error('Wallet transactions cannot be deleted');
 });
 
-walletTransactionSchema.pre('deleteOne', function(next) {
-  next(new Error('Wallet transactions cannot be deleted'));
+walletTransactionSchema.pre('deleteOne', function() {
+  throw new Error('Wallet transactions cannot be deleted');
 });
 
-walletTransactionSchema.pre('deleteMany', function(next) {
-  next(new Error('Wallet transactions cannot be deleted'));
+walletTransactionSchema.pre('deleteMany', function() {
+  throw new Error('Wallet transactions cannot be deleted');
 });
 
 module.exports = mongoose.model('WalletTransaction', walletTransactionSchema);
